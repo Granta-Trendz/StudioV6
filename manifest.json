@@ -1,0 +1,14 @@
+{
+  "name": "Granta Studio",
+  "short_name": "Granta Studio",
+  "description": "Clean AI media and generate Meta-ready posts for Granta Trendz",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f0fdfa",
+  "theme_color": "#0f766e",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

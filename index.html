@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f766e" />
+  <meta name="description" content="Granta Studio – Clean AI media + generate Meta-ready posts" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Granta Studio</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <style>
+    :root {
+      --primary: #0f766e; --primary-dark: #0d9488; --bg: #f0fdfa; --card: #fff;
+      --text: #134e4a; --muted: #64748b; --border: #ccfbf1; --success: #059669; --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; line-height: 1.5; }
+    .header { background: linear-gradient(135deg, #0f766e, #0d9488); color: #fff; padding: 14px 18px; position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(15,118,110,.25); }
+    .header h1 { font-size: 1.1rem; font-weight: 700; }
+    .header span { font-size: .75rem; opacity: .9; }
+    .container { max-width: 480px; margin: 0 auto; padding: 14px; }
+    .card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+    .card h2 { font-size: .92rem; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    label { display: block; font-size: .78rem; font-weight: 500; color: var(--muted); margin-bottom: 4px; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: .92rem; margin-bottom: 10px; background: #fff; color: var(--text); }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15,118,110,.12); }
+    textarea { min-height: 70px; resize: vertical; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 16px; border: none; border-radius: 8px; font-size: .92rem; font-weight: 600; cursor: pointer; width: 100%; transition: .2s; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-primary:disabled { background: #99f6e4; color: #5eead4; cursor: not-allowed; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-secondary { background: #f1f5f9; color: var(--text); border: 1px solid #e2e8f0; }
+    .btn-sm { padding: 8px 12px; font-size: .82rem; width: auto; }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .upload-zone { border: 2px dashed #99f6e4; border-radius: var(--radius); padding: 22px; text-align: center; cursor: pointer; background: #f0fdfa; }
+    .upload-zone:hover { border-color: var(--primary); background: #ccfbf1; }
+    .upload-zone input { display: none; }
+    .preview-wrap { display: none; margin-top: 12px; text-align: center; }
+    .preview-wrap.show { display: block; }
+    .preview-wrap img { max-width: 100%; max-height: 320px; border-radius: 8px; border: 1px solid var(--border); object-fit: contain; }
+    .file-info { font-size: .78rem; color: var(--muted); margin-top: 6px; word-break: break-all; }
+    .output-field { margin-bottom: 12px; }
+    .output-field label { display: flex; justify-content: space-between; align-items: center; }
+    .copy-btn { background: none; border: none; color: var(--primary); font-size: .78rem; font-weight: 600; cursor: pointer; }
+    .editable { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: .9rem; width: 100%; min-height: 40px; }
+    .editable:focus { outline: none; border-color: var(--primary); background: #fff; }
+    .full-post { background: #f1f5f9; border-radius: 8px; padding: 12px; font-size: .85rem; white-space: pre-wrap; line-height: 1.55; max-height: 280px; overflow-y: auto; user-select: text; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border); display: flex; z-index: 100; box-shadow: 0 -2px 8px rgba(0,0,0,.05); }
+    .nav-item { flex: 1; text-align: center; padding: 10px 0 8px; font-size: .7rem; color: var(--muted); background: none; border: none; font-weight: 500; cursor: pointer; }
+    .nav-item.active { color: var(--primary); }
+    .nav-item svg { display: block; margin: 0 auto 3px; width: 20px; height: 20px; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .toast { position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%); background: #134e4a; color: #fff; padding: 10px 18px; border-radius: 30px; font-size: .85rem; opacity: 0; transition: .3s; z-index: 200; pointer-events: none; }
+    .toast.show { opacity: 1; }
+    .badge { display: inline-block; background: #ccfbf1; color: var(--primary); font-size: .68rem; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
+    .hint { font-size: .72rem; color: var(--muted); margin: -4px 0 10px; }
+    .option-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+    .option-row:last-child { border-bottom: none; }
+    .toggle { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; border-radius: 26px; transition: .2s; }
+    .toggle .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+    .toggle input:checked + .slider { background: var(--primary); }
+    .toggle input:checked + .slider:before { transform: translateX(20px); }
+    .status { display: none; padding: 10px; border-radius: 8px; font-size: .82rem; margin-top: 10px; text-align: center; }
+    .status.show { display: block; }
+    .status.processing { background: #ecfdf5; color: #065f46; }
+    .status.success { background: #d1fae5; color: #065f46; }
+    .status.error { background: #fee2e2; color: #991b1b; }
+    .row { display: flex; gap: 10px; }
+    .row > * { flex: 1; }
+    #passwordModal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
+    .modal-box { background: #fff; border-radius: 14px; padding: 22px 18px; width: 100%; max-width: 340px; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1 id="pageTitle">Granta Studio</h1>
+    </div>
+    <span id="shopNameHeader">Granta Trendz</span>
+  </div>
+
+  <div class="container">
+    <!-- ========== CREATE PAGE ========== -->
+    <div id="page-create" class="page active">
+      <div class="card">
+        <h2>📷 Product Media</h2>
+        <div class="upload-zone" id="uploadZone">
+          <div style="font-size:1.8rem;margin-bottom:6px">🖼️</div>
+          <p style="font-size:.9rem"><strong>Tap to upload</strong> photo</p>
+          <small style="color:#94a3b8">JPG, PNG, WebP · AI metadata will be removed</small>
+          <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/jpg" />
+        </div>
+        <div class="preview-wrap" id="previewWrap">
+          <img id="previewImg" alt="Preview" />
+          <div class="file-info" id="fileInfo"></div>
+        </div>
+        <div id="mediaOptions" style="display:none;margin-top:10px">
+          <label>Aspect Ratio</label>
+          <select id="aspectRatio">
+            <option value="4:5" selected>4:5 Portrait (IG + FB)</option>
+            <option value="1:1">1:1 Square</option>
+            <option value="original">Keep original (max 2048px)</option>
+          </select>
+          <div class="option-row">
+            <div>
+              <strong style="font-size:.88rem">Natural HD enhance</strong>
+              <div class="hint" style="margin:0">Soft clarity · natural tones · Meta-safe size</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="dslrEnhance" checked /><span class="slider"></span></label>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="cleanMediaBtn" style="width:100%;margin-top:8px">✨ Clean Media for Meta</button>
+          <div class="status" id="mediaStatus"></div>
+          <div id="cleanResult" style="display:none;margin-top:10px">
+            <span class="badge">Clean · No AI metadata</span>
+            <button class="btn btn-success btn-sm" id="downloadCleanBtn" style="margin-top:8px;width:100%">⬇️ Download Clean Image</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>⚙️ Product Details</h2>
+        <label>Category</label>
+        <select id="category">
+          <option value="newborn">Newborn</option>
+          <option value="kids">Kids</option>
+          <option value="gents">Gents</option>
+          <option value="ladies" selected>Ladies</option>
+          <option value="home">Home Textiles</option>
+        </select>
+        <label>Product Type * (e.g. Kurti, Shirt, Frock, Jeans)</label>
+        <input type="text" id="productType" placeholder="e.g. Floral Kurti Set" />
+        <label>Selling Price (₹)</label>
+        <input type="number" id="price" placeholder="e.g. 899" min="1" />
+        <label>Fabric</label>
+        <input type="text" id="productFabric" placeholder="e.g. Soft cotton, rayon, georgette" />
+        <label>Sizes</label>
+        <input type="text" id="productSizes" placeholder="e.g. S, M, L, XL, XXL" />
+        <label>Colours</label>
+        <input type="text" id="productColours" placeholder="e.g. Navy, Maroon, Beige" />
+        <label>Features</label>
+        <input type="text" id="productFeatures" placeholder="e.g. Side slits, embroidered yoke, soft lining" />
+        <label>Occasion</label>
+        <input type="text" id="productOccasion" placeholder="e.g. Office, festive, casual, wedding" />
+        <button class="btn btn-primary" id="generateBtn">📝 Generate Post</button>
+      </div>
+
+      <div class="card" id="outputCard" style="display:none">
+        <h2>📝 Generated Post <span class="badge" id="variationBadge">Unique</span></h2>
+        <div class="output-field">
+          <label>Title <button class="copy-btn" data-target="outTitle">Copy</button></label>
+          <div class="editable" id="outTitle" contenteditable="true"></div>
+        </div>
+        <div class="output-field">
+          <label>Price <button class="copy-btn" data-target="outPrice">Copy</button></label>
+          <div class="editable" id="outPrice" contenteditable="true"></div>
+        </div>
+        <div class="output-field">
+          <label>Description (Instagram / Facebook) <button class="copy-btn" data-target="outDesc">Copy</button></label>
+          <div class="editable" id="outDesc" contenteditable="true" style="min-height:90px"></div>
+        </div>
+        <div class="output-field">
+          <label>Threads Version (Short) <button class="copy-btn" data-target="outThreads">Copy</button></label>
+          <div class="editable" id="outThreads" contenteditable="true" style="min-height:60px"></div>
+        </div>
+        <div class="output-field">
+          <label>Hashtags <button class="copy-btn" data-target="outHashtags">Copy</button></label>
+          <div class="editable" id="outHashtags" contenteditable="true" style="min-height:50px"></div>
+        </div>
+        <div class="output-field">
+          <label>Full Post <button class="copy-btn" data-target="fullPost">Copy All</button></label>
+          <div class="full-post" id="fullPost"></div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="regenerateBtn">🔄 Re-generate</button>
+          <button class="btn btn-success" id="copyFullBtn">📋 Copy Full Post</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SETTINGS PAGE ========== -->
+    <div id="page-settings" class="page">
+      <div class="card">
+        <h2>🏪 Business Identity</h2>
+        <label>Shop / Brand Name</label>
+        <input type="text" id="setShopName" value="Granta Trendz" />
+        <label>Phone Number</label>
+        <input type="tel" id="setPhone" value="8129353405" />
+        <label>WhatsApp Business Link</label>
+        <input type="url" id="setWhatsapp" value="https://wa.me/message/75PBIO6QU2G3E1" />
+        <label>Instagram Handle / Link</label>
+        <input type="text" id="setInstagram" value="@grantatrendz" />
+        <label>Facebook Page Link</label>
+        <input type="url" id="setFacebook" value="https://www.facebook.com/profile.php?id=61561797538524" />
+        <label>YouTube Channel Link</label>
+        <input type="url" id="setYoutube" placeholder="https://youtube.com/@..." />
+        <label>Website / Catalogue Link</label>
+        <input type="url" id="setWebsite" placeholder="https://..." />
+      </div>
+      <div class="card">
+        <h2>📍 Location</h2>
+        <label>Full Address or City + State</label>
+        <input type="text" id="setAddress" value="Kumbanad, Pathanamthitta, Kerala" />
+        <label>Google Maps Link</label>
+        <input type="url" id="setMaps" value="https://maps.app.goo.gl/eF6TyFTD4LXw8Xei7" />
+      </div>
+      <div class="card">
+        <h2>📌 Extra Note</h2>
+        <textarea id="setExtra" placeholder="e.g. COD available | Free shipping above ₹999"></textarea>
+      </div>
+      <div class="card">
+        <h2>🤖 AI Vision (Optional)</h2>
+        <p class="hint">Paste Gemini API key for photo-aware captions. Get free key at aistudio.google.com/apikey</p>
+        <label>Gemini API Key</label>
+        <input type="text" id="setGeminiKey" placeholder="enter your Gemini AI studio api key" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="card">
+        <h2>🔐 Settings Password</h2>
+        <p id="passwordStatusText" class="hint">Password required to open Settings.</p>
+        <label>Current Password</label>
+        <input type="text" id="currentSettingsPassword" readonly style="background:#f1f5f9" />
+        <label>Change Password</label>
+        <input type="text" id="setSettingsPassword" placeholder="Leave blank to keep current" autocomplete="off" />
+      </div>
+      <button class="btn btn-primary" id="saveSettingsBtn">💾 Save Settings</button>
+      <p style="text-align:center;font-size:.75rem;color:var(--muted);margin-top:10px">Saved only on this device.</p>
+    </div>
+
+    <!-- ========== GUIDE PAGE ========== -->
+    <div id="page-guide" class="page">
+      <div class="card">
+        <h2>📖 How to use Granta Studio</h2>
+        <ol style="font-size:.85rem;color:var(--muted);padding-left:18px">
+          <li style="margin-bottom:6px">Upload product photo</li>
+          <li style="margin-bottom:6px">Tap <strong>Clean Media for Meta</strong> (removes AI metadata + HD enhance)</li>
+          <li style="margin-bottom:6px">Download clean image</li>
+          <li style="margin-bottom:6px">Enter product type, price, fabric, sizes, colours, features & occasion → <strong>Generate Post</strong></li>
+          <li style="margin-bottom:6px">Copy full post + upload clean image in Meta Business Suite</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h2>✅ What you get</h2>
+        <p style="font-size:.85rem;color:var(--muted)">Clean image without AI metadata · Correct 4:5 size · SEO-optimised caption with fabric/sizes/colours/features · Structured Threads version · Hashtags · Contact + Facebook from Settings</p>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-page="create">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Create
+    </button>
+    <button class="nav-item" data-page="settings">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Settings
+    </button>
+    <button class="nav-item" data-page="guide">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Guide
+    </button>
+  </nav>
+
+  <div id="passwordModal">
+    <div class="modal-box">
+      <h2 style="font-size:1.05rem;text-align:center;margin-bottom:6px">🔒 Settings Locked</h2>
+      <p style="font-size:.82rem;color:var(--muted);text-align:center;margin-bottom:14px">Enter password to open Settings</p>
+      <input type="password" id="settingsPasswordInput" placeholder="Enter password" style="margin-bottom:12px" />
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" id="passwordCancelBtn" style="flex:1">Cancel</button>
+        <button class="btn btn-primary" id="passwordUnlockBtn" style="flex:1">Unlock</button>
+      </div>
+      <p id="passwordError" style="display:none;color:#dc2626;font-size:.8rem;text-align:center;margin-top:10px">Wrong password</p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ========== TEMPLATES (NO price inside – price is added only once later) ==========
+    const TEMPLATES = {
+      ladies: [{
+        titles: [
+          "Premium {item} | Limited Stock",
+          "Best-Selling {item} | Order Now",
+          "New Arrival {item} | Shop Today",
+          "High-Demand {item} | Selling Fast",
+          "{item} – Quality You Can Trust"
+        ],
+        descs: [
+          "Premium {item} crafted for everyday elegance and comfort. Soft fabric, precise fit and flattering silhouette.",
+          "High-quality {item} designed for modern women. Excellent finish, comfortable wear and reliable sizing.",
+          "Discover this best-selling {item}. Superior fabric quality and a silhouette that flatters every occasion."
+        ]
+      }],
+      gents: [{
+        titles: [
+          "Premium {item} | Limited Stock",
+          "Men’s {item} – Sharp Fit | Order Now",
+          "{item} for Professionals | Shop Today",
+          "Best Value {item} | Selling Fast"
+        ],
+        descs: [
+          "Premium {item} designed for the modern professional. Crisp fabric, accurate fit and all-day comfort.",
+          "High-quality {item} that delivers both style and comfort. Suitable for office and formal occasions."
+        ]
+      }],
+      kids: [{
+        titles: [
+          "Kids {item} | Soft & Durable",
+          "Premium {item} for Kids | Order Now",
+          "{item} – Parent Preferred | Limited Stock",
+          "Soft Cotton {item} | Shop Today"
+        ],
+        descs: [
+          "Soft and durable {item} designed for active kids. Comfortable fabric, easy care and reliable sizing.",
+          "High-quality {item} that parents trust. Gentle on skin, long-lasting and stylish."
+        ]
+      }],
+      newborn: [{
+        titles: [
+          "Newborn {item} | Ultra Soft",
+          "Gentle {item} for Babies | Order Now",
+          "Premium Newborn {item} | Limited Stock",
+          "Soft {item} – Newborn Essential"
+        ],
+        descs: [
+          "Ultra-soft {item} designed specifically for newborn comfort. Gentle fabric, easy dressing and safe quality.",
+          "Premium {item} for newborns. Soft on delicate skin with a practical, trusted design."
+        ]
+      }],
+      home: [{
+        titles: [
+          "Premium {item} | Soft Finish",
+          "Home {item} – Quality Fabric | Order Now",
+          "{item} for Modern Homes | Limited Stock",
+          "Soft Luxury {item} | Shop Today"
+        ],
+        descs: [
+          "Premium {item} with a soft, refined finish. Durable quality suitable for daily use.",
+          "High-quality {item} designed for comfort and longevity with an excellent fabric feel."
+        ]
+      }]
+    };
+
+    const ITEM_NAMES = {
+      ladies: ["Kurti Set", "Kurti", "Dress", "Top", "Palazzo Set"],
+      gents: ["Formal Shirt", "Casual Shirt", "T-Shirt", "Trouser"],
+      kids: ["Frock", "T-Shirt", "Shorts Set", "Dress", "Night Suit"],
+      newborn: ["Onesie", "Romper", "Baby Set", "Night Suit"],
+      home: ["Bedsheet", "Towel Set", "Cushion Cover", "Home Linen"]
+    };
+
+    const HASHTAG_SETS = {
+      ladies: ["#WomensWear #Kurti #EthnicWear #ReadyMade #IndianFashion #ShopOnline #LimitedStock #NewArrival #FashionIndia #BuyNow", "#LadiesFashion #PremiumWear #OfficeWear #DailyWear #WomenStyle #OnlineShopping #TrendingNow #QualityWear"],
+      gents: ["#MensWear #FormalShirt #MensFashion #OfficeWear #GentsWear #ReadyMade #ShopOnline #LimitedStock #QualityMensWear #BuyNow", "#MensStyle #CasualShirt #ProfessionalWear #IndianMensFashion #OnlineShopping #NewArrival"],
+      kids: ["#KidsWear #KidsFashion #ChildrenClothing #KidsClothes #SoftCotton #ShopForKids #LimitedStock #NewArrival #BuyNow", "#KidsStyle #ComfortWear #IndianKidsFashion #OnlineShopping #QualityKidsWear"],
+      newborn: ["#NewbornWear #BabyClothes #NewbornEssentials #SoftBabyWear #BabyFashion #ShopForBaby #LimitedStock #BuyNow", "#InfantClothes #GentleOnSkin #Newborn #BabyEssentials #OnlineShopping"],
+      home: ["#HomeTextiles #Bedsheet #HomeLinen #HomeDecor #SoftFurnishings #ShopHome #LimitedStock #QualityLinen #BuyNow", "#HomeEssentials #PremiumHome #OnlineShopping #NewArrival #HomeStyle"]
+    };
+
+    // ========== STATE ==========
+    let currentFile = null, cleanedBlob = null, cleanedFilename = "granta_clean.jpg";
+    let lastCategory = "ladies", lastPrice = "", lastProductType = "";
+    let lastFabric = "", lastSizes = "", lastColours = "", lastFeatures = "", lastOccasion = "";
+    let settingsUnlocked = false;
+    const DEFAULT_SETTINGS_PASSWORD = "granta";
+
+    // ========== HELPERS ==========
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg; t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2200);
+    }
+    function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function getSettings() {
+      const defaults = {
+        shopName: "Granta Trendz", phone: "8129353405",
+        whatsapp: "https://wa.me/message/75PBIO6QU2G3E1",
+        instagram: "@grantatrendz",
+        facebook: "https://www.facebook.com/profile.php?id=61561797538524",
+        youtube: "", website: "",
+        address: "Kumbanad, Pathanamthitta, Kerala",
+        maps: "https://maps.app.goo.gl/eF6TyFTD4LXw8Xei7",
+        extra: "", geminiKey: "", settingsPassword: "granta"
+      };
+      try {
+        const saved = JSON.parse(localStorage.getItem("grantaStudio_settings") || "{}");
+        const merged = { ...defaults };
+        for (const k of Object.keys(defaults)) {
+          if (saved[k] !== undefined && saved[k] !== null && String(saved[k]).trim() !== "") merged[k] = saved[k];
+        }
+        return merged;
+      } catch { return defaults; }
+    }
+    function saveSettingsToStorage(data) {
+      localStorage.setItem("grantaStudio_settings", JSON.stringify(data));
+    }
+
+    function buildContactBlock() {
+      const s = getSettings();
+      const lines = [];
+      if (s.whatsapp) lines.push("WhatsApp: " + s.whatsapp);
+      if (s.phone) lines.push("Contact: " + s.phone);
+      if (s.instagram) lines.push("Instagram: " + s.instagram);
+      if (s.facebook) lines.push("Facebook: " + s.facebook);
+      if (s.youtube) lines.push("YouTube: " + s.youtube);
+      if (s.website) lines.push("Website: " + s.website);
+      if (s.address) lines.push("Location: " + s.address);
+      if (s.maps) lines.push("Maps: " + s.maps);
+      if (s.extra) lines.push(s.extra);
+      return lines.join("\n");
+    }
+
+    function copyText(text) {
+      if (!text || !text.trim()) { showToast("Nothing to copy"); return; }
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        navigator.clipboard.writeText(text).then(() => showToast("Copied!")).catch(() => fallbackCopy(text));
+      } else fallbackCopy(text);
+    }
+    function fallbackCopy(text) {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly", "");
+      ta.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); showToast("Copied!"); }
+      catch { showToast("Select text and copy manually"); }
+      document.body.removeChild(ta);
+    }
+
+    // ========== IMAGE CLEAN + ENHANCE ==========
+    function applyNaturalTone(ctx, w, h) {
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const d = imageData.data;
+      const contrast = 1.04, intercept = 128 * (1 - contrast), sat = 1.06;
+      for (let i = 0; i < d.length; i += 4) {
+        let r = d[i], g = d[i+1], b = d[i+2];
+        r = r * contrast + intercept; g = g * contrast + intercept; b = b * contrast + intercept;
+        const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        r = luma + (r - luma) * sat; g = luma + (g - luma) * sat; b = luma + (b - luma) * sat;
+        r += 2.5; b -= 1.5;
+        d[i] = r < 0 ? 0 : r > 255 ? 255 : r;
+        d[i+1] = g < 0 ? 0 : g > 255 ? 255 : g;
+        d[i+2] = b < 0 ? 0 : b > 255 ? 255 : b;
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+    function applySoftSharpen(ctx, w, h, amount) {
+      const src = ctx.getImageData(0, 0, w, h), s = src.data;
+      const out = ctx.createImageData(w, h), o = out.data; o.set(s);
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const i = (y * w + x) * 4;
+          for (let c = 0; c < 3; c++) {
+            const c0 = s[i+c], up = s[((y-1)*w+x)*4+c], dn = s[((y+1)*w+x)*4+c];
+            const lf = s[(y*w+x-1)*4+c], rt = s[(y*w+x+1)*4+c];
+            let v = c0 + amount * (c0 * 4 - up - dn - lf - rt);
+            o[i+c] = v < 0 ? 0 : v > 255 ? 255 : v;
+          }
+        }
+      }
+      ctx.putImageData(out, 0, 0);
+    }
+    function processImage(file, aspect, enhance) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const srcW = img.naturalWidth, srcH = img.naturalHeight;
+            let outW, outH, dx = 0, dy = 0, dw, dh;
+
+            if (aspect === "4:5") {
+              // Exact Instagram portrait size (no subject cutoff)
+              // Uses CONTAIN + white padding so full body / product stays visible
+              const longSide = Math.max(srcW, srcH);
+              if (longSide >= 1600) {
+                outW = 1440;
+                outH = 1800;
+              } else {
+                outW = 1080;
+                outH = 1350;
+              }
+              const scale = Math.min(outW / srcW, outH / srcH);
+              dw = Math.round(srcW * scale);
+              dh = Math.round(srcH * scale);
+              dx = Math.round((outW - dw) / 2);
+              dy = Math.round((outH - dh) / 2);
+            } else if (aspect === "1:1") {
+              const side = Math.min(srcW, srcH);
+              const sx = Math.round((srcW - side) / 2);
+              const sy = Math.round((srcH - side) / 2);
+              outW = outH = Math.min(side, 1440);
+              // For square we still crop to fill (center)
+              const canvas = document.createElement("canvas");
+              canvas.width = outW;
+              canvas.height = outH;
+              const ctx = canvas.getContext("2d");
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = "high";
+              ctx.fillStyle = "#fff";
+              ctx.fillRect(0, 0, outW, outH);
+              ctx.drawImage(img, sx, sy, side, side, 0, 0, outW, outH);
+              if (enhance) {
+                applyNaturalTone(ctx, outW, outH);
+                applySoftSharpen(ctx, outW, outH, 0.18);
+              }
+              canvas.toBlob(b => b ? resolve(b) : reject(new Error("toBlob failed")), "image/jpeg", 0.94);
+              return;
+            } else {
+              // Keep original aspect, max 2048 on long side
+              const maxSide = 2048;
+              if (srcW >= srcH) {
+                outW = Math.min(srcW, maxSide);
+                outH = Math.round(outW * (srcH / srcW));
+              } else {
+                outH = Math.min(srcH, maxSide);
+                outW = Math.round(outH * (srcW / srcH));
+              }
+              dw = outW;
+              dh = outH;
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = outW;
+            canvas.height = outH;
+            const ctx = canvas.getContext("2d");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(0, 0, outW, outH);
+            ctx.drawImage(img, 0, 0, srcW, srcH, dx, dy, dw, dh);
+            if (enhance) {
+              applyNaturalTone(ctx, outW, outH);
+              applySoftSharpen(ctx, outW, outH, 0.18);
+            }
+            canvas.toBlob(b => b ? resolve(b) : reject(new Error("toBlob failed")), "image/jpeg", 0.94);
+          } catch (e) { reject(e); }
+        };
+        img.onerror = () => reject(new Error("load failed"));
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    // ========== HELPERS FOR CLEAN TEXT ==========
+    function capitalize(str) {
+      if (!str || !str.trim()) return str || "";
+      return str.trim().replace(/(^|[.!?]\s+)([a-z])/g, (m, p1, p2) => p1 + p2.toUpperCase())
+                      .replace(/^([a-z])/, (m, p1) => p1.toUpperCase());
+    }
+    function cleanItem(name) {
+      if (!name) return name;
+      // Capitalize each word of product type for title
+      return name.trim().replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    // ========== CONTENT GENERATION (no price in title or description) ==========
+    function generateContent(category, price, productType, fabric, sizes, colours, features, occasion) {
+      const catTemplates = TEMPLATES[category] || TEMPLATES.ladies;
+      const group = pick(catTemplates);
+      const rawItem = (productType && productType.trim()) ? productType.trim() : pick(ITEM_NAMES[category] || ITEM_NAMES.ladies);
+      const item = cleanItem(rawItem);
+
+      // Shorter title – never contains price + full stop
+      const shortTitles = [
+        "Premium " + item,
+        "Best-Selling " + item,
+        "New Arrival " + item,
+        item + " – Limited Stock",
+        "Shop " + item + " Today"
+      ];
+      let title = pick(shortTitles).replace(/₹\s*\d+/gi, "").replace(/\s{2,}/g, " ").trim();
+      if (!title.endsWith(".")) title += ".";
+
+      // Description – avoid repeating title words, NO price
+      const titleWords = new Set(title.toLowerCase().replace(/[^\w\s]/g, "").split(/\s+/).filter(w => w.length > 3));
+      let baseDesc = pick(group.descs).replace(/{item}/g, item).replace(/\.+$/, "");
+      // Remove words already heavily present in title to reduce repetition
+      let sentences = [baseDesc];
+
+      if (fabric) sentences.push("Crafted in " + capitalize(fabric));
+      if (features) sentences.push(capitalize(features).replace(/^With\s+/i, ""));
+      if (colours) sentences.push("Available in " + capitalize(colours));
+      if (sizes) sentences.push("Sizes: " + sizes.trim().toUpperCase());
+      if (occasion) sentences.push("Perfect for " + capitalize(occasion));
+
+      let desc = sentences.join(". ").replace(/\.\s*\./g, ".").replace(/\s+/g, " ").trim();
+      if (!desc.endsWith(".")) desc += ".";
+      desc += " Limited stock – order now for pan-India delivery.";
+      desc = capitalize(desc);
+
+      // Light de-duplication: if a sentence starts with the same phrase as title, soften it
+      const titleCore = item.toLowerCase();
+      if (desc.toLowerCase().startsWith(titleCore)) {
+        desc = desc.replace(new RegExp("^" + item.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*", "i"), "This ");
+        desc = capitalize(desc);
+      }
+
+      const hashtags = pick(HASHTAG_SETS[category] || HASHTAG_SETS.ladies);
+      const s = getSettings();
+
+      // Threads – keep Instagram: and Price:, remove location, feature text only (no "with")
+      const threadsLines = [];
+      threadsLines.push(title);   // already has full stop
+
+      let shortDesc = "Premium quality for everyday comfort.";
+      if (fabric) shortDesc = "Made from " + capitalize(fabric) + ".";
+      if (features) shortDesc += " " + capitalize(features).replace(/^With\s+/i, "") + ".";
+      if (occasion) shortDesc += " Ideal for " + capitalize(occasion) + ".";
+      threadsLines.push(shortDesc.trim());
+
+      if (sizes) threadsLines.push("Sizes: " + sizes.trim().toUpperCase());
+      threadsLines.push("Price: ₹" + (price || ""));
+      if (s.whatsapp) threadsLines.push("WhatsApp: " + s.whatsapp);
+      if (s.phone) threadsLines.push("Contact: " + s.phone);
+      if (s.instagram) threadsLines.push("Instagram: " + s.instagram);
+      threadsLines.push(hashtags);
+
+      const threads = threadsLines.filter(Boolean).join("\n");
+
+      return { title, price: price ? `₹${price}` : "", desc, threads, hashtags, item };
+    }
+
+    function renderOutput(data) {
+      document.getElementById("outTitle").textContent = data.title;
+      document.getElementById("outPrice").textContent = data.price;
+      document.getElementById("outDesc").textContent = data.desc;
+      document.getElementById("outThreads").textContent = data.threads || data.desc;
+      document.getElementById("outHashtags").textContent = data.hashtags;
+      const contact = buildContactBlock();
+      const full = [data.title, data.price, "", data.desc, "", contact, "", data.hashtags].filter(Boolean).join("\n");
+      document.getElementById("fullPost").textContent = full;
+      document.getElementById("outputCard").style.display = "block";
+      document.getElementById("variationBadge").textContent = "Unique";
+    }
+
+    // ========== GEMINI (optional) ==========
+    async function analyzeImageWithGemini(base64Data, apiKey, category, price, note, productType, contactLine, fabric, sizes, colours, features, occasion) {
+      const prompt = `You are a senior e-commerce copywriter for a premium ready-made garment brand selling across India. Write SEO-optimised, high-converting content that ranks first.
+
+Product Type (use this exact name): ${productType}
+Category: ${category}
+Price: ₹${price || "not given"}
+Fabric: ${fabric || "not specified"}
+Sizes: ${sizes || "not specified"}
+Colours: ${colours || "not specified"}
+Features: ${features || "not specified"}
+Occasion: ${occasion || "not specified"}
+Extra note: ${note || "none"}
+Contact for Threads: ${contactLine || ""}
+
+Write ONE unique high-converting social media post.
+
+STRICT RULES:
+- Title: Short (max 6–8 words). Include product type. End with a full stop. NEVER include the price or ₹ symbol.
+- Description: 55–90 words. Professional, natural language. Do NOT repeat the main words already used in the title. Weave in fabric, sizes, colours, features and occasion. DO NOT mention the price or ₹ at all. End with urgency + CTA.
+- Threads: Keep short. Exact structure (each on new line):
+  Title.
+  Short description that includes the feature text directly (no "with" word) if features given
+  Sizes: ...
+  Price: ₹...
+  WhatsApp: ...
+  Contact: ...
+  Instagram: ...
+  #Hashtags
+  (Do NOT include location)
+- Hashtags: 10–12 relevant tags, space-separated
+- Capitalize properly. Corporate international English, no fluff
+
+Return ONLY valid JSON:
+{"title":"...","description":"...","threads":"...","hashtags":"#tag1 #tag2 ..."}`;
+
+      const body = {
+        contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 600 }
+      };
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error("Gemini error " + res.status);
+      const json = await res.json();
+      const text = json.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("Parse failed");
+      return JSON.parse(match[0]);
+    }
+
+    // ========== UI EVENTS ==========
+    // Nav + password
+    function getSettingsPassword() {
+      const s = getSettings();
+      return (s.settingsPassword && String(s.settingsPassword).trim()) ? String(s.settingsPassword).trim() : DEFAULT_SETTINGS_PASSWORD;
+    }
+    function openCreate() {
+      document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      document.querySelector('.nav-item[data-page="create"]').classList.add("active");
+      document.getElementById("page-create").classList.add("active");
+      document.getElementById("pageTitle").textContent = "Granta Studio";
+      settingsUnlocked = false;
+    }
+    function openGuide() {
+      document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      document.querySelector('.nav-item[data-page="guide"]').classList.add("active");
+      document.getElementById("page-guide").classList.add("active");
+      document.getElementById("pageTitle").textContent = "Guide";
+      settingsUnlocked = false;
+    }
+    function openSettingsPage() {
+      document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      document.querySelector('.nav-item[data-page="settings"]').classList.add("active");
+      document.getElementById("page-settings").classList.add("active");
+      document.getElementById("pageTitle").textContent = "Settings";
+      loadSettingsUI();
+      settingsUnlocked = true;
+    }
+    document.querySelectorAll(".nav-item").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const page = btn.dataset.page;
+        if (page === "settings") {
+          if (settingsUnlocked) openSettingsPage();
+          else {
+            document.getElementById("passwordModal").style.display = "flex";
+            document.getElementById("settingsPasswordInput").value = "";
+            document.getElementById("passwordError").style.display = "none";
+            setTimeout(() => document.getElementById("settingsPasswordInput").focus(), 100);
+          }
+        } else if (page === "guide") openGuide();
+        else openCreate();
+      });
+    });
+    document.getElementById("passwordCancelBtn").addEventListener("click", () => {
+      document.getElementById("passwordModal").style.display = "none";
+    });
+    document.getElementById("passwordUnlockBtn").addEventListener("click", () => {
+      const entered = document.getElementById("settingsPasswordInput").value;
+      if (entered === getSettingsPassword()) {
+        document.getElementById("passwordModal").style.display = "none";
+        openSettingsPage();
+        showToast("Settings unlocked");
+      } else {
+        document.getElementById("passwordError").style.display = "block";
+        document.getElementById("settingsPasswordInput").value = "";
+      }
+    });
+    document.getElementById("settingsPasswordInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") document.getElementById("passwordUnlockBtn").click();
+    });
+
+    // Upload
+    const uploadZone = document.getElementById("uploadZone");
+    const fileInput = document.getElementById("fileInput");
+    uploadZone.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", () => {
+      if (!fileInput.files.length) return;
+      const file = fileInput.files[0];
+      if (file.size > 50 * 1024 * 1024) { showToast("File too large"); return; }
+      currentFile = file; cleanedBlob = null;
+      document.getElementById("cleanResult").style.display = "none";
+      document.getElementById("mediaStatus").className = "status";
+      const url = URL.createObjectURL(file);
+      document.getElementById("previewImg").src = url;
+      document.getElementById("previewWrap").classList.add("show");
+      document.getElementById("mediaOptions").style.display = "block";
+      document.getElementById("fileInfo").textContent = file.name + " · " + (file.size/1024/1024).toFixed(2) + " MB";
+    });
+
+    document.getElementById("cleanMediaBtn").addEventListener("click", async () => {
+      if (!currentFile) return;
+      const btn = document.getElementById("cleanMediaBtn");
+      btn.disabled = true;
+      const st = document.getElementById("mediaStatus");
+      st.className = "status show processing";
+      st.textContent = "Cleaning metadata + preparing HD…";
+      try {
+        const aspect = document.getElementById("aspectRatio").value;
+        const enhance = document.getElementById("dslrEnhance").checked;
+        cleanedBlob = await processImage(currentFile, aspect, enhance);
+        const base = (currentFile.name || "photo").replace(/\.[^.]+$/, "");
+        cleanedFilename = base + "_granta_clean.jpg";
+        st.className = "status show success";
+        st.textContent = "Clean image ready · No AI metadata · Meta-safe size";
+        document.getElementById("cleanResult").style.display = "block";
+        // Update preview to cleaned
+        document.getElementById("previewImg").src = URL.createObjectURL(cleanedBlob);
+        showToast("Media cleaned");
+      } catch (e) {
+        console.error(e);
+        st.className = "status show error";
+        st.textContent = "Failed to process image";
+      } finally { btn.disabled = false; }
+    });
+
+    document.getElementById("downloadCleanBtn").addEventListener("click", () => {
+      if (!cleanedBlob) return;
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(cleanedBlob);
+      a.download = cleanedFilename;
+      a.click();
+      showToast("Downloaded");
+    });
+
+    // Generate
+    document.getElementById("generateBtn").addEventListener("click", async () => {
+      const category = document.getElementById("category").value;
+      const productType = document.getElementById("productType").value.trim();
+      const price = document.getElementById("price").value.trim();
+      const fabric = document.getElementById("productFabric").value.trim();
+      const sizes = document.getElementById("productSizes").value.trim();
+      const colours = document.getElementById("productColours").value.trim();
+      const features = document.getElementById("productFeatures").value.trim();
+      const occasion = document.getElementById("productOccasion").value.trim();
+      if (!price) { showToast("Please enter a price"); return; }
+      if (!productType) { showToast("Please enter Product Type"); return; }
+      lastCategory = category; lastPrice = price; lastProductType = productType;
+      lastFabric = fabric; lastSizes = sizes; lastColours = colours;
+      lastFeatures = features; lastOccasion = occasion;
+      const btn = document.getElementById("generateBtn");
+      btn.disabled = true;
+      const settings = getSettings();
+      const apiKey = (settings.geminiKey || "").trim();
+      // Build a note string for Gemini compatibility
+      const noteParts = [];
+      if (fabric) noteParts.push("Fabric: " + fabric);
+      if (sizes) noteParts.push("Sizes: " + sizes);
+      if (colours) noteParts.push("Colours: " + colours);
+      if (features) noteParts.push("Features: " + features);
+      if (occasion) noteParts.push("Occasion: " + occasion);
+      const note = noteParts.join(". ");
+      try {
+        let data;
+        if (apiKey && (cleanedBlob || currentFile)) {
+          btn.textContent = "🤖 AI writing…";
+          const blob = cleanedBlob || currentFile;
+          const base64 = await new Promise((res, rej) => {
+            const reader = new FileReader();
+            reader.onload = () => res(String(reader.result).split(",")[1]);
+            reader.onerror = rej;
+            reader.readAsDataURL(blob);
+          });
+          let contactLine = "";
+          if (settings.whatsapp) contactLine = "WhatsApp: " + settings.whatsapp;
+          else if (settings.phone) contactLine = "Contact: " + settings.phone;
+          const ai = await analyzeImageWithGemini(base64, apiKey, category, price, note, productType, contactLine, fabric, sizes, colours, features, occasion);
+          data = {
+            title: ai.title || "",
+            price: price ? `₹${price}` : "",
+            desc: ai.description || "",
+            threads: ai.threads || "",
+            hashtags: ai.hashtags || ""
+          };
+        } else {
+          data = generateContent(category, price, productType, fabric, sizes, colours, features, occasion);
+        }
+        renderOutput(data);
+        showToast("Post generated");
+        document.getElementById("outputCard").scrollIntoView({ behavior: "smooth" });
+      } catch (e) {
+        console.error(e);
+        const data = generateContent(category, price, productType, fabric, sizes, colours, features, occasion);
+        renderOutput(data);
+        showToast("Generated with templates");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "📝 Generate Post";
+      }
+    });
+
+    document.getElementById("regenerateBtn").addEventListener("click", () => {
+      const data = generateContent(lastCategory, lastPrice, lastProductType, lastFabric, lastSizes, lastColours, lastFeatures, lastOccasion);
+      renderOutput(data);
+      showToast("New variation");
+    });
+
+    document.querySelectorAll(".copy-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const el = document.getElementById(btn.dataset.target);
+        copyText((el.innerText || el.textContent || "").trim());
+      });
+    });
+    document.getElementById("copyFullBtn").addEventListener("click", () => {
+      copyText(document.getElementById("fullPost").innerText);
+    });
+
+    // Settings
+    function loadSettingsUI() {
+      const s = getSettings();
+      document.getElementById("setShopName").value = s.shopName || "";
+      document.getElementById("setPhone").value = s.phone || "";
+      document.getElementById("setWhatsapp").value = s.whatsapp || "";
+      document.getElementById("setInstagram").value = s.instagram || "";
+      document.getElementById("setFacebook").value = s.facebook || "";
+      document.getElementById("setYoutube").value = s.youtube || "";
+      document.getElementById("setWebsite").value = s.website || "";
+      document.getElementById("setAddress").value = s.address || "";
+      document.getElementById("setMaps").value = s.maps || "";
+      document.getElementById("setExtra").value = s.extra || "";
+      document.getElementById("setGeminiKey").value = s.geminiKey || "";
+      const curPass = (s.settingsPassword && String(s.settingsPassword).trim()) ? String(s.settingsPassword).trim() : "granta";
+      document.getElementById("currentSettingsPassword").value = curPass;
+      document.getElementById("passwordStatusText").innerHTML = curPass === "granta"
+        ? "Using default password: <strong>granta</strong>"
+        : "Custom password is active (updated).";
+      document.getElementById("setSettingsPassword").value = "";
+      document.getElementById("shopNameHeader").textContent = s.shopName || "Granta Trendz";
+    }
+
+    document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+      const existing = getSettings();
+      const newPass = document.getElementById("setSettingsPassword").value.trim();
+      const data = {
+        shopName: document.getElementById("setShopName").value.trim(),
+        phone: document.getElementById("setPhone").value.trim(),
+        whatsapp: document.getElementById("setWhatsapp").value.trim(),
+        instagram: document.getElementById("setInstagram").value.trim(),
+        facebook: document.getElementById("setFacebook").value.trim(),
+        youtube: document.getElementById("setYoutube").value.trim(),
+        website: document.getElementById("setWebsite").value.trim(),
+        address: document.getElementById("setAddress").value.trim(),
+        maps: document.getElementById("setMaps").value.trim(),
+        extra: document.getElementById("setExtra").value.trim(),
+        geminiKey: document.getElementById("setGeminiKey").value.trim(),
+        settingsPassword: newPass ? newPass : (existing.settingsPassword || "granta")
+      };
+      saveSettingsToStorage(data);
+      document.getElementById("setSettingsPassword").value = "";
+      const curPass = data.settingsPassword || "granta";
+      document.getElementById("currentSettingsPassword").value = curPass;
+      document.getElementById("passwordStatusText").innerHTML = curPass === "granta"
+        ? "Using default password: <strong>granta</strong>"
+        : "Custom password is active (updated).";
+      document.getElementById("shopNameHeader").textContent = data.shopName || "";
+      showToast(data.geminiKey ? "Settings saved (API key stored)" : "Settings saved on this device");
+    });
+
+    // Init
+    loadSettingsUI();
+    try {
+      const raw = localStorage.getItem("grantaStudio_settings");
+      if (!raw || raw === "{}") saveSettingsToStorage(getSettings());
+    } catch (e) {}
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  </script>
+</body>
+</html>
